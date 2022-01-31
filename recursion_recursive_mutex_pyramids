@@ -1,0 +1,24 @@
+recursive_mutex rm;
+void fee(char c,int cnt) {
+	rm.lock();
+	static int lim = cnt;
+	for (int i = 0; i < lim - cnt + 1; ++i) {
+		cout << c;
+	}
+	cout << endl;
+	if (cnt <= 1) {
+		rm.unlock();
+		return;
+	}
+	fee(c,--cnt);
+	rm.unlock();
+}
+
+int main() {
+
+	thread t1(fee, 'a', 4);
+	thread t2(fee, 'o', 4);
+
+	t1.join();
+	t2.join();
+};
