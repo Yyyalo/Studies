@@ -1,0 +1,33 @@
+int main(int argc, char** argv) {
+
+	///////////////////////////////
+	//summing numbers among threads
+	std::vector<int> toBeSummed;
+	for (int i = 0; i < 20000; ++i) {
+		toBeSummed.push_back(rand());
+	}
+	//1 thread
+	long sum = 0;
+	for (int i = 0; i < 20000; ++i) {
+		sum += toBeSummed[i];
+	}
+	std::cout << sum << std::endl;
+
+	//2 threads
+	std::atomic<long> sum2 = 0;
+	std::thread th1([&]() {
+		for (int i = 0; i < 10000; ++i) {
+			sum2 += toBeSummed[i];
+		}});
+	std::thread th2([&]() {
+		for (int i = 10001; i < 20000; ++i) {
+			sum2 += toBeSummed[i];
+		}
+		});
+	th1.join();
+	th2.join();
+	std::cout << sum << std::endl;
+
+
+	return 0;
+}
