@@ -1,0 +1,134 @@
+#include <iostream>
+#include <thread>
+#include <vector>
+#include <mutex>
+using namespace std;
+
+// с очередью //пока официант берет блюдо, повар может успеть приготовить еще
+
+/////////////////////////
+//без очереди
+
+mutex m;
+mutex m2;
+state orderState;
+
+enum state {
+	ready,
+	def,
+	newOrder,
+	preparing,
+	toPrepare
+};
+void changeState(state st) {
+	//unique_lock<mutex> u_m(m);
+	orderState = st;
+	//u_m.unlock();
+}
+class baseThread {
+protected:
+	unique_ptr<thread> th;
+	const char* name;
+public:
+	bool createThread(const char* name);
+	void endThread() { th->join(); };
+	virtual void Process() = 0;
+};
+bool baseThread::createThread(const char* name){
+	if (!th)
+		th = new thread(&baseThread::Process, this);
+	return true;
+};
+
+class Waiter:baseThread {
+public:
+	void Process() {//process newOrder, ready
+		//checking state and doing
+		//checking in while
+		unique_lock<mutex> m_u(m);
+	
+		//while (true) {
+		//	switch (orderState) {
+		//			case ready:
+		//				takeMeal(); break;
+		//			case newOrder:
+		//				takeOrder(); break;
+		//			default:;
+		//	}
+		//	//break
+		//	m_u.unlock()
+
+		//	std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+		//}
+		//doing depending on state
+		while (orderState != ready) {
+			m_u.unlock();
+			this_thread::sleep_for(std::chrono::milliseconds(5000));
+			m_u.lock();
+		}
+		takeMeal();
+
+	}
+	void takeMeal() {
+		//unique_lock<mutex> m_u(m);
+		cout << "Took the meal" << endl;
+		changeState(def);
+	}
+	void takeOrder() {
+		//unique_lock<mutex> m_u(m);
+		cout << "Took the order and passed it to the chief" << endl;
+		//inform the chief
+		changeState(preparing);
+	}
+	
+	//options:
+
+	//void Process() {
+		//#1 проверяем постоянно
+		//unique_lock<mutex> u_m(m);
+	//	while (1) {
+	//		if (orderState == ready) {
+	//			break;
+	//		}
+	//	};
+	//	switch (orderState) {
+	//	case ready:
+	//		takeMeal();
+	//	case newOrder:
+	//		takeOrder();
+	//	}
+	//	//#2 проверяем кажд 3 сек
+	//	while (1) {
+	//		if (orderState != ready) {
+	//			std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+	//		}
+	//		if (orderState == ready) {
+	//			break;
+	//		}
+	//	};
+	//	//u_m.unlock();
+	//	//#3 провер кажд 3 сек
+	//	while (orderState != ready) {
+	//		std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+	//	};
+	//	changeState(def);
+	//}
+};
+
+class Chef:baseThread {
+public:
+	void Prepare() {
+		unique_lock<mutex> m_u(m);
+		cout << "Preparing" << endl;
+		std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+		cout << "Prepared";
+		changeState(ready);
+		m_u.unlock();
+	}
+};
+
+
+int main(int argc, char** argv) {
+
+	return 0;
+}
